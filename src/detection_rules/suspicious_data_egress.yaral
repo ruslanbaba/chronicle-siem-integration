@@ -1,0 +1,43 @@
+rule suspicious_data_egress {
+    meta:
+        author = "Security Team"
+        description = "Detects suspicious data egress patterns specific to healthcare data"
+        severity = "CRITICAL"
+        compliance = ["HIPAA", "GDPR", "HITECH"]
+        
+    events:
+        $data_access = $event.metadata.event_type = "DATA_ACCESS"
+        $file_transfer = $event.metadata.event_type = "FILE_TRANSFER"
+        $auth_event = $event.metadata.event_type = "AUTHENTICATION"
+        
+    match:
+        // Healthcare data patterns
+        $data_access.resource.type in ["healthcare_record", "patient_data", "medical_imaging"] and
+        (
+            // Large volume of records accessed
+            $data_access.resource.count > 1000 or
+            // Sensitive data transfer to external destination
+            $file_transfer.destination.type = "EXTERNAL" and
+            $file_transfer.data.size > 50MB or
+            // Access outside normal working hours
+            $data_access.timestamp.hour not in [7..19] or
+            // Access from unusual location
+            $auth_event.source.geo_location not in allowed_locations
+        ) and
+        // Correlation with authentication events
+        $auth_event.principal.email = $data_access.principal.email
+        
+    timeframe:
+        last 1 hour
+        
+    condition:
+        $data_access or $file_transfer
+        
+    output:
+        timestamp = $event.metadata.timestamp
+        user = $event.principal.email
+        data_type = $data_access.resource.type
+        records_accessed = $data_access.resource.count
+        destination = $file_transfer.destination.address
+        alert = "Suspicious healthcare data egress detected"
+}

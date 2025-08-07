@@ -1,0 +1,70 @@
+{
+    "log_collectors": {
+        "gcp_audit": {
+            "enabled": true,
+            "project_id": "${PROJECT_ID}",
+            "destination_bucket": "chronicle-audit-logs",
+            "log_filter": "resource.type=\"gce_instance\" OR resource.type=\"cloudsql_database\"",
+            "retention_days": 30
+        },
+        "vpc_flow": {
+            "enabled": true,
+            "networks": ["default", "prod-network"],
+            "sampling_ratio": 0.5,
+            "metadata": "INCLUDE_ALL_METADATA"
+        },
+        "cloud_ids": {
+            "enabled": true,
+            "regions": ["us-central1", "us-east1"],
+            "threat_severity_threshold": "MEDIUM"
+        }
+    },
+    "detection_rules": {
+        "crypto_mining": {
+            "enabled": true,
+            "severity": "HIGH",
+            "threshold": {
+                "cpu_usage_percent": 90,
+                "duration_seconds": 3600
+            }
+        },
+        "data_egress": {
+            "enabled": true,
+            "severity": "CRITICAL",
+            "thresholds": {
+                "records_count": 1000,
+                "file_size_mb": 50
+            }
+        },
+        "brute_force": {
+            "enabled": true,
+            "severity": "HIGH",
+            "thresholds": {
+                "failed_attempts": 10,
+                "time_window_minutes": 5
+            }
+        }
+    },
+    "response_playbooks": {
+        "vm_isolation": {
+            "enabled": true,
+            "triggers": ["crypto_mining", "data_egress"],
+            "actions": ["network_isolate", "create_snapshot", "notify_team"]
+        },
+        "ip_blocking": {
+            "enabled": true,
+            "triggers": ["brute_force"],
+            "block_duration_hours": 24
+        }
+    },
+    "notifications": {
+        "email": {
+            "enabled": true,
+            "recipients": ["security-team@company.com"]
+        },
+        "slack": {
+            "enabled": true,
+            "channel": "#security-alerts"
+        }
+    }
+}

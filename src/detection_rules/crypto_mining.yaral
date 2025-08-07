@@ -1,0 +1,29 @@
+rule crypto_mining_detection {
+    meta:
+        author = "Security Team"
+        description = "Detects potential cryptomining activity through network and process patterns"
+        severity = "HIGH"
+        
+    events:
+        $network_conn = $event.metadata.event_type = "NETWORK_CONNECTION"
+        $process = $event.metadata.event_type = "PROCESS_LAUNCH"
+        
+    match:
+        // Known mining pool connections
+        $network_conn.destination.port in [3333, 4444, 5555, 7777, 8888, 9999] or
+        // Known mining domains (partial list)
+        $network_conn.destination.hostname matches /.*pool\.*.mining.*/ or
+        // CPU intensive processes
+        $process.process.cpu_usage > 90 and
+        $process.process.duration > 3600  // Running for more than 1 hour
+        
+    condition:
+        $network_conn or $process
+        
+    output:
+        timestamp = $event.metadata.timestamp
+        hostname = $event.target.hostname
+        process_name = $process.process.name
+        destination_ip = $network_conn.destination.ip
+        alert = "Potential cryptomining activity detected"
+}
