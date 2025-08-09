@@ -51,5 +51,3 @@ These playbooks ensure rapid containment and remediation of detected threats.
 - [Google Chronicle SIEM Documentation](https://cloud.google.com/chronicle/docs)
 - [YARA-L Rule Syntax](https://cloud.google.com/chronicle/docs/detection/yara-l-2-0-syntax)
 - [YARA-L 2.0 Overview](https://cloud.google.com/chronicle/docs/detection/yara-l-2-0-overview)
-
-For further details, see the `/docs` directory (if available) or contact the project maintainer.
